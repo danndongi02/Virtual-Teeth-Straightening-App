@@ -13,7 +13,7 @@ client = Client(account_sid, auth_token)
 
 
 # logging configuration
-logging.basicConfig(filename='sample.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename='logs/bot.log', encoding='utf-8', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -21,12 +21,13 @@ logger = logging.getLogger(__name__)
 def send_message(to_number, body_text):
     try:
         message = client.messages.create(
-            from_ = f"whatsapp: {twilio_number}",
+            from_ = f"whatsapp:{twilio_number}",
             body = body_text,
-            to= f"whatsapp: {to_number}"
+            to= f"whatsapp:{to_number}"
         )
         
         logger.info(f"Message sent to {to_number}: {message.body}")
         
     except Exception as e:
         logger.error(f"Error sending message to {to_number}: {e}")
+        print("Messange not sent")
