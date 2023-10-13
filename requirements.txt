@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+twilio
+python-decouple
+sqlalchemy
+psycopg2-binary
+python-multipart
+pyngrok

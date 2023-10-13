@@ -1,0 +1,14 @@
+# Virtual environment
+vtsb-venv/
+
+# VS Code files
+.vscode/
+
+# Logs
+logs/
+
+# Configuration details
+.env
+
+# Local development environment variables
+__pycache__/
