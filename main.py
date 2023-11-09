@@ -1,3 +1,6 @@
+import os
+import requests
+
 from fastapi import FastAPI, Form, Depends, Request
 from decouple import config
 from sqlalchemy.exc import SQLAlchemyError
@@ -40,15 +43,39 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     
     profile_name = form_data['ProfileName'].split("whatsapp:")[-1]  # The sender's WhatsApp profile name
     whatsapp_number = form_data['From'].split("whatsapp:")[-1]      # The sender's WhatsApp number
+    message = form_data['Body']                                     # The body of the incoming message
     num_media = int(form_data['NumMedia'])                          # The number of media items in the message
     
     logger.info(f"Sending response to {profile_name}: {whatsapp_number}")
     
     
     # Response when image is received
+    # Image logic after it has been received
     if num_media > 0:
+        media_url = form_data['MediaUrl0']
+        content_type = form_data['MediaContentType0']
+        r = requests.get(media_url)
+        print(content_type)
+        
+        if content_type == "image/jpeg":
+            filename = f"uploads/{profile_name}/{message}.jpg"
+        elif content_type == "image/png":
+            filename = f"uploads/{profile_name}/{message}.png"
+        elif content_type == "image/gif":
+            filename = f"uploads/{profile_name}/{message}.gif"
+        else:
+            filename = None
+            
+        if filename:
+            if not os.path.exists(f'uploads/{profile_name}'):
+                os.mkdir(f'uploads/{profile_name}')
+            with open(filename, 'wb') as f:
+                f.write(r.content)
+        
+        
         response = f"Thank you {profile_name}! Your image has been received"
         logger.info(f"Image received from {profile_name}: {whatsapp_number}")
+        
     elif num_media == 0:
         response = default_response
     
