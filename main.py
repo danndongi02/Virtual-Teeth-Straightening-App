@@ -14,6 +14,8 @@ app = FastAPI()
 
 # Values
 company_name = config("COMPANY_NAME")
+default_response = f"Hello. Thank you for contacting {company_name}. The bot is currently under development. Kindly bear with us"
+
 
 # Dependency
 def get_db():
@@ -37,13 +39,19 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     form_data = await request.form()
     
     profile_name = form_data['ProfileName'].split("whatsapp:")[-1]  # The sender's WhatsApp profile name
-    whatsapp_number = form_data['From'].split("whatsapp:")[-1]      # The sender's WhatsApp number    
+    whatsapp_number = form_data['From'].split("whatsapp:")[-1]      # The sender's WhatsApp number
+    num_media = int(form_data['NumMedia'])                          # The number of media items in the message
     
     logger.info(f"Sending response to {profile_name}: {whatsapp_number}")
     
     
-    # default response
-    response = f"Hello. Thank you for contacting {company_name}. The bot is currently under development. Kindly bear with us"
+    # Response when image is received
+    if num_media > 0:
+        response = f"Thank you {profile_name}! Your image has been received"
+        logger.info(f"Image received from {profile_name}: {whatsapp_number}")
+    elif num_media == 0:
+        response = default_response
+    
     print(response)    
     
     
