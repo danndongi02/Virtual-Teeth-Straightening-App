@@ -12,7 +12,7 @@ from utils import send_message, logger
 app = FastAPI()
 
 
-# Variables
+# Values
 company_name = config("COMPANY_NAME")
 
 # Dependency
@@ -32,18 +32,19 @@ async def index():
 
 # /message endpoint
 @app.post("/message")
-async def reply(request: Request, Body: str = Form(), db: Session = Depends(get_db)):
-    # Extract phone number from the incoming webhook request
+async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
+    # Extract data from the incoming webhook request
     form_data = await request.form()
-    profile_name = form_data['ProfileName'].split("whatsapp:")[-1]
-    whatsapp_number = form_data['From'].split("whatsapp:")[-1]
-    # print(f"Whatsapp number: {whatsapp_number}")
-    print(f"Sending response to {profile_name}: {whatsapp_number}")
+    
+    profile_name = form_data['ProfileName'].split("whatsapp:")[-1]  # The sender's WhatsApp profile name
+    whatsapp_number = form_data['From'].split("whatsapp:")[-1]      # The sender's WhatsApp number    
+    
+    logger.info(f"Sending response to {profile_name}: {whatsapp_number}")
     
     
-    # sample response
+    # default response
     response = f"Hello. Thank you for contacting {company_name}. The bot is currently under development. Kindly bear with us"
-    print(response)
+    print(response)    
     
     
     # Store the conversation in database
