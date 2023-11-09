@@ -13,7 +13,7 @@ client = Client(account_sid, auth_token)
 
 
 # logging configuration
-logging.basicConfig(filename='logs/bot.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename='logs/bot.log', encoding='utf-8', format='%(asctime)s %(levelname)s: %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +26,7 @@ def send_message(to_number, body_text):
             to= f"whatsapp:{to_number}"
         )
         
-        logger.info(f"Message sent to {to_number}: {message.body}")
+        logger.info(f"Message sent to {to_number}: {message.body}\n")
         
     except Exception as e:
         logger.error(f"Error sending message to {to_number}: {e}")
