@@ -15,3 +15,7 @@ __pycache__/
 
 # Images
 uploads/
+
+# others
+Documents/
+scripts/
