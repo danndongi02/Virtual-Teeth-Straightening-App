@@ -9,7 +9,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 # Internal imports
 from models import Conversation, SessionLocal
-from utils import send_message, logger
+from utils import send_message, logger, store_conversation
 
 # FastAPI setup
 app = FastAPI()
@@ -83,21 +83,10 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     
     
     # Store the conversation in database
-    try:
-        conversation = Conversation(
-            sender=whatsapp_number,
-            message=Body,
-            response=response
-        )
-        
-        db.add(conversation)
-        db.commit()
-        logger.info(f"Conversation #{conversation.id} stored in database")
-        
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Error storing conversation in database: {e}")
-        
+    store_conversation(db, whatsapp_number, response, Body)
+
+
+    # send response
     send_message(whatsapp_number, response)
     
     return "Success"

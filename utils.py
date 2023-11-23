@@ -2,6 +2,11 @@ import logging
 
 from twilio.rest import Client
 from decouple import config
+from sqlalchemy.exc import SQLAlchemyError
+
+
+# internal imports
+from models import Conversation
 
 
 # set up twilio credentials
@@ -31,3 +36,23 @@ def send_message(to_number, body_text):
     except Exception as e:
         logger.error(f"Error sending message to {to_number}: {e}")
         print("Messange not sent")
+        
+        
+# store conversation in database
+def store_conversation(db, user_number, response, Body):
+    try:
+        conversation = Conversation(
+            sender = user_number,
+            message = Body,
+            response = response
+        )
+        
+        db.add(conversation)
+        db.commit()
+        
+        logger.info(f"Conversation #{conversation.id} stored in database")
+        
+    except SQLAlchemyError as e:
+        db.rollback()
+        
+        logger.error(f"Error storing conversation in database: {e}") 
