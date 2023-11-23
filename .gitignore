@@ -12,3 +12,10 @@ logs/
 
 # Local development environment variables
 __pycache__/
+
+# scripts
+scripts/
+
+# others
+uploads/
+Documents/
