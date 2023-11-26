@@ -48,15 +48,20 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     
     logger.info(f"Sending response to {profile_name}: {whatsapp_number}")
     
+    if num_media > 0 and message == "":
+        print("No message")
+        response = "Please send a message with your image"
+        
     
     # Response when image is received
     # Image logic after it has been received
     if num_media > 0:
         media_url = form_data['MediaUrl0']
         content_type = form_data['MediaContentType0']
-        r = requests.get(media_url)
-        print(content_type)
+        image = requests.get(media_url)
+        print(f"Content type: {content_type}")
         
+        # Get image type
         if content_type == "image/jpeg":
             filename = f"uploads/{profile_name}/{message}.jpg"
         elif content_type == "image/png":
@@ -66,11 +71,12 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
         else:
             filename = None
             
+        # Save image
         if filename:
             if not os.path.exists(f'uploads/{profile_name}'):
                 os.mkdir(f'uploads/{profile_name}')
             with open(filename, 'wb') as f:
-                f.write(r.content)
+                f.write(image.content)
         
         
         response = f"Thank you {profile_name}! Your image has been received"
