@@ -18,7 +18,7 @@ client = Client(account_sid, auth_token)
 
 
 # logging configuration
-logging.basicConfig(filename='logs/bot.log', encoding='utf-8', format='%(asctime)s %(levelname)s: %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
+logging.basicConfig(filename='logs/detect_teeth.log', encoding='utf-8', format='%(asctime)s %(levelname)s: %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +35,7 @@ def send_message(to_number, body_text):
         
     except Exception as e:
         logger.error(f"Error sending message to {to_number}: {e}")
-        print("Messange not sent")
+        print("Message not sent")
         
         
 # store conversation in database
@@ -59,13 +59,27 @@ def store_conversation(db, whatsapp_number, body_text, response_text):
 # identify teeth
 def detect_teeth(image_path):
     # read image
-    image = cv2.imread(image_path)
+    try:
+        image = cv2.imread(fr"{image_path}")
+        logger.info(f"Image read successfully")
+    except Exception as e:
+        print(f"Error reading image: {e}")
+        logger.info(f"Error reading image: {e}")
+        response = "Couldn't read image!"
+        # return response
     
     # convert to grayscale
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    try:
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        logger.info(f"Image converted to grayscale")
+    except Exception as e:
+        print(f"Error converting image to grayscale: {e}")
+        logger.info(f"Error converting image to grayscale: {e}")
+        response = "Couldn't convert image to grayscale!"
+        # return response
     
     # apply face detection using Haar Cascade classifier
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     faces = face_cascade.detectMultiScale(gray_image, 1.1, 4)
     
     # if no faces detected
@@ -80,7 +94,7 @@ def detect_teeth(image_path):
         face_region = gray_image[y:y+h, x:x+w]
         
         # apply smile detection using Haar Cascade classifier
-        smile_cascade = cv2.CascadeClassifier('haarcascade_smile.xml')
+        smile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_smile.xml')
         smiles = smile_cascade.detectMultiScale(face_region, 1.1, 4)
         
         # if smile detected

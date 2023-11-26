@@ -63,33 +63,39 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
         
         # Get image type
         if content_type == "image/jpeg":
-            filename = f"uploads/{profile_name}/{message}.jpg"
+            filename = f"uploads\{message}.jpeg"
         elif content_type == "image/png":
-            filename = f"uploads/{profile_name}/{message}.png"
+            filename = f"uploads\{message}.png"
         elif content_type == "image/gif":
-            filename = f"uploads/{profile_name}/{message}.gif"
+            filename = f"uploads\{message}.gif"
         else:
             filename = None
             
         # Save image
         if filename:
-            if not os.path.exists(f'uploads/{profile_name}'):
-                os.mkdir(f'uploads/{profile_name}')
+            if not os.path.exists(f'uploads\{profile_name}'):
+                os.mkdir(f'uploads\{profile_name}')
             with open(filename, 'wb') as f:
                 f.write(image.content)
+                logger.info(f"Image saved successfully")
         
+        logger.info("Entering teeth detection")
+        logger.info(f"Filename: {filename}")
+        logger.info(f"Working directory: {os.getcwd()}")
+        
+        file_path = os.path.join(os.getcwd(), filename)
+        logger.info(f"File path: {file_path}")
         
         # detect teeth
-        response = detect_teeth(filename)
+        response = detect_teeth(file_path)
         
-        response = f"Your image has been received"
         logger.info(f"Image received from {profile_name}: {whatsapp_number}")
         
         
     elif num_media == 0:
         response = default_response
     
-    print(response)    
+    print(f"Response: {response}")    
     
     
     # Store the conversation in database
