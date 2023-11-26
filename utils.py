@@ -1,4 +1,5 @@
 import logging
+import cv2
 
 from twilio.rest import Client
 from decouple import config
@@ -53,3 +54,40 @@ def store_conversation(db, whatsapp_number, body_text, response_text):
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Error storing conversation in database: {e}")
+        
+
+# identify teeth
+def detect_teeth(image_path):
+    # read image
+    image = cv2.imread(image_path)
+    
+    # convert to grayscale
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # apply face detection using Haar Cascade classifier
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    faces = face_cascade.detectMultiScale(gray_image, 1.1, 4)
+    
+    # if no faces detected
+    if len(faces) == 0:
+        print("No faces detected")
+        response = "No teeth detected"
+        return response
+    
+    
+    # for each detected face, identify teeth using smile detection
+    for (x, y, w, h) in faces:
+        face_region = gray_image[y:y+h, x:x+w]
+        
+        # apply smile detection using Haar Cascade classifier
+        smile_cascade = cv2.CascadeClassifier('haarcascade_smile.xml')
+        smiles = smile_cascade.detectMultiScale(face_region, 1.1, 4)
+        
+        # if smile detected
+        if len(smiles) > 0:
+            print("Smile detected")
+            response = "Teeth detected"
+            return response
+        
+    response = "No teeth detected"
+    return response

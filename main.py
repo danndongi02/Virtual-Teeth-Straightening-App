@@ -9,7 +9,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 # Internal imports
 from models import Conversation, SessionLocal
-from utils import send_message, logger, store_conversation
+from utils import send_message, logger, store_conversation, detect_teeth
 
 # FastAPI setup
 app = FastAPI()
@@ -79,8 +79,12 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
                 f.write(image.content)
         
         
-        response = f"Thank you {profile_name}! Your image has been received"
+        # detect teeth
+        response = detect_teeth(filename)
+        
+        response = f"Your image has been received"
         logger.info(f"Image received from {profile_name}: {whatsapp_number}")
+        
         
     elif num_media == 0:
         response = default_response
