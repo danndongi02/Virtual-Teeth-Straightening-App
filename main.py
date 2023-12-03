@@ -9,7 +9,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 # Internal imports
 from models import Conversation, SessionLocal
-from utils import send_message, logger, store_conversation, detect_teeth
+from utils import send_message, logger, store_conversation, detect_face, is_teeth_visible
 
 # FastAPI setup
 app = FastAPI()
@@ -30,12 +30,28 @@ def get_db():
 
 
 # root endpoint
+'''
+    method - "get"
+    endpoint - "/"
+    
+    Return: {"msg": "Successfully running"}
+'''
 @app.get("/")
 async def index():
     return {"msg": "Successfully running"}
 
 
 # /message endpoint
+'''
+    method - "post"
+    endpoint - "/message"
+    
+    request: Request object
+    Body: Form data from incoming request
+    db: Database session dependency
+    
+    return: "Success" after complete execution
+'''
 @app.post("/message")
 async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     # Extract data from the incoming webhook request
@@ -46,22 +62,16 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     message = form_data['Body']                                     # The body of the incoming message
     num_media = int(form_data['NumMedia'])                          # The number of media items in the message
     
-    logger.info(f"Sending response to {profile_name}: {whatsapp_number}")
-    
-    if num_media > 0 and message == "":
-        print("No message")
-        response = "Please send a message with your image"
-        
     
     # Response when image is received
-    # Image logic after it has been received
     if num_media > 0:
+        # Get media information from webhook information
         media_url = form_data['MediaUrl0']
         content_type = form_data['MediaContentType0']
         image = requests.get(media_url)
         print(f"Content type: {content_type}")
         
-        # Get image type
+        # Check image type
         if content_type == "image/jpeg":
             filename = f"uploads\{message}.jpeg"
         elif content_type == "image/png":
@@ -71,7 +81,7 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
         else:
             filename = None
             
-        # Save image
+        # Save image locally
         if filename:
             if not os.path.exists(f'uploads\{profile_name}'):
                 os.mkdir(f'uploads\{profile_name}')
@@ -79,18 +89,34 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
                 f.write(image.content)
                 logger.info(f"Image saved successfully")
         
-        logger.info("Entering teeth detection")
-        logger.info(f"Filename: {filename}")
-        logger.info(f"Working directory: {os.getcwd()}")
         
-        file_path = os.path.join(os.getcwd(), filename)
-        logger.info(f"File path: {file_path}")
+        # image path
+        image_path = os.path.join(os.getcwd(), filename)
+        logger.info(f"Image path: {image_path}")
         
-        # detect teeth
-        response = detect_teeth(file_path)
         
-        logger.info(f"Image received from {profile_name}: {whatsapp_number}")
+        # check for faces
+        logger.info("Checking for faces...")
+        face_detected = detect_face(image_path)
         
+        if face_detected:    
+            logger.info("Checking for teeth visibility...")
+            
+            # detect teeth
+            teeth_present = is_teeth_visible(image_path)
+            
+            if teeth_present:
+                response = "Teeth detected"
+                logger.info("Teeth detected")
+            else:
+                response = "No teeth detected"
+                logger.info("No teeth detected")
+            
+        else:
+            response = "No face detected. Please send an image with your face visible"
+        
+        
+        # straighten_teeth(image_path)
         
     elif num_media == 0:
         response = default_response
@@ -99,10 +125,11 @@ async def reply(request: Request, Body = Form(), db: Session = Depends(get_db)):
     
     
     # Store the conversation in database
-    store_conversation(db, whatsapp_number, response, Body)
+    store_conversation(db, whatsapp_number, Body, response)
 
 
     # send response
+    logger.info(f"Sending response to {profile_name}: {whatsapp_number}")
     send_message(whatsapp_number, response)
     
     return "Success"
